@@ -1,0 +1,21 @@
+odds = [x for x in range(1,30000) if x % 2 != 0]
+evens = [x for x in range(1,30000) if x % 2 == 0]
+
+rddodds = sc.parallelize(odds)
+rddevens = sc.parallelize(evens)
+rddoddspair = rddodds.map(lambda x: (x, "a" * x))
+rddevenspair = rddevens.map(lambda x: (x, "b" * x))
+
+allkeys = rddoddspair.keys().union(rddevenspair.keys())
+
+summary = allkeys.stats()
+print("\n****Printing summary stats of all the keys****\n")
+print("(count: " + str(summary.count()) + ", mean: " + str(summary.mean()) + ", stdev: " + str(summary.stdev()) + ", max: " + str(summary.max()) + ", min: " + str(summary.min()) + ")")
+
+summary = sc.parallelize(allkeys.take(100)).stats() 
+
+print("\n****Printing summary stats of first 100 items****\n")
+print("(count: " + str(summary.count()) + ", mean: " + str(summary.mean()) + ", stdev: " + str(summary.stdev()) + ", max: " + str(summary.max()) + ", min: " + str(summary.min()) + ")";)
+
+
+count: 100, mean: 100.0, stdev: 57.7321400954, max: 199.0, min: 1.0)

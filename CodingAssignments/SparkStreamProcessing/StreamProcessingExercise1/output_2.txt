@@ -1,0 +1,16 @@
+----------- 2018-06-22 18:00:40 -----------
++--------------------+-------------+
+|             hashtag|hashtag_count|
++--------------------+-------------+
+|           #LaManada|            5|
+| #JusticiaPatriarcal|            4|
+|#ManadaLiberadaJu...|            3|
+|#JusticiaPatriarcal.|            2|
+|#LaManadaSomosNos...|            2|
+|             #futbol|            1|
+|#LaManadaEsElSistema|            1|
+|          #Feminismo|            1|
+|             #Madrid|            1|
+|#justiciapatriarcal.|            1|
++--------------------+-------------+
+

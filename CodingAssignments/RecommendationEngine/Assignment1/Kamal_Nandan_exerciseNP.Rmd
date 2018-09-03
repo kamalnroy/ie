@@ -1,0 +1,248 @@
+# IE - Master in Business Analytics and Big Data
+Recommendation Systems
+
+Building a Non Personalized Recommendation Engine
+
+Author: Kamal Nandan
+
+========================================================
+
+# Initialization
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Import libraries
+```{r}
+library(data.table)
+library(dplyr)
+library(plyr)
+```
+
+
+```{r}
+#function to transpose a dataframe, if required
+transpose_data_frame <- function(df) {
+  t_df <- transpose(df)
+  colnames(t_df) <- rownames(df)
+  rownames(t_df) <- colnames(df)
+  return (t_df)
+}
+```
+
+Load the critics dataset. Also do some data cleaning or transformation
+
+```{r}
+rdf <- data.frame(read.csv("critics.csv", header = TRUE, stringsAsFactors = FALSE))
+
+mnames <- colnames(rdf) # contain the movie names
+mnames <- mnames[-1] #first one is not a movie name
+unames <- rdf[,1] # contain the usernames
+
+#remove the first column from the data frame - thats useless
+rdf1 = rdf
+rdf <- rdf[, -1]
+
+avgrating <- colMeans(rdf, na.rm = TRUE)
+
+# append average rating to the data frame as a row
+rdfwithmean <- rbind(rdf, avgrating)
+
+#transpose the data frame now
+trdf <- transpose_data_frame(rdfwithmean)
+
+# Add the movie names to the transposed data frame
+trdf <- trdf %>% mutate(Movie = mnames) # we can also use "trdf <- cbind(trdf, mnames)" or perhaps (trdf$Movie <- mnames)
+```
+
+# 1) Top 5 Movies, by rating mean
+Calculate mean rating for each movie, ordered with the highest rating listed first, and plot the top 5.
+
+**Expected result**:
+3.600000, 'The Shawshank Redemption'
+3.266667, 'Star Wars IV - A New Hope'
+3.222222, 'Blade Runner'
+3.166667, 'Groundhog Day'
+3.062500, 'The Silence of the Lambs'
+
+```{r Top 5 Movies, by rating mean}
+# Column 21 contains the average rating now; arrange the data frame indescending order on the basis of mean rating
+trdfd <- trdf %>% select(`21`, Movie) %>% arrange(desc(trdf$`21`))
+
+#print top 5 movies on the basis of average rating
+print(trdfd[1:5,])
+```
+
+# 2) Top 5 Movies, by rating distribution
+Calculate the percentage of ratings for each movie that are 4 stars or higher. Order with the highest percentage first, and plot the top 5 movies with more high ratings distribution.
+
+**Expected result**:
+0.7000000, 'The Shawshank Redemption'
+0.5333333, 'Star Wars IV - A New Hope'
+0.5000000, 'Gladiator'
+0.4444444, 'Blade Runner'
+0.4375000, 'The Silence of the Lambs'
+
+```{r fig.width=7, fig.height=6}
+# this function will proportion of movies that have 4 or 5 stars
+get_pc_4_or_5 <- function(ratings1) {
+  t <- table(ratings1)
+  return (sum(t[names(t) >= 4]) / sum(!is.na(ratings1)))
+} 
+
+# get the total no. of movies
+numofmovies = nrow(trdf)
+
+#store the % of ratings that have rating are >=4 
+pcmorethan4 = vector(mode = "double", length = numofmovies)
+for (row in 1:numofmovies) {
+  ratings = trdf[row, 1:20]
+  pcmorethan4[row] <- get_pc_4_or_5(unlist(ratings))
+}
+
+print(pcmorethan4)
+# Add a new column that would contain the % ratings >=4 for every rating
+trdf <- trdf %>% mutate("PCgt4" = pcmorethan4)
+
+# arrange the dataframe in descending order of % ratings >=4 and print
+trdf_d_by_pcgt4 <- trdf %>% select(PCgt4, Movie) %>% arrange(desc(trdf$PCgt4))
+print(trdf_d_by_pcgt4[1:5,])
+
+```
+
+# 3) Top 5 Movies, by quantity of ratings
+Count the number of ratings for each movie, order the one with most number of ratings first, submit the top 5.
+
+**Expected result**:
+17, 'Toy Story'
+16, 'The Silence of the Lambs'
+15, 'Star Wars IV - A New Hope'
+14, 'Star Wars VI - Return of the Jedi'
+13, 'Independence Day'
+
+```{r fig.width=7, fig.height=6}
+# get the no. of movies
+numofmovies = nrow(trdf)
+
+# Get the no. of ratimgs for each movie; use a loop 
+no_of_ratings = vector(mode = "integer", length = numofmovies)
+for (row in 1:numofmovies) {
+  ratings = trdf[row, 1:20]
+  no_of_ratings[row] <- sum(!is.na(ratings))
+}
+
+print(no_of_ratings)
+# Add a new col that contains the total no. of ratings for each movie
+trdf <- trdf %>% mutate("NoOfRatings" = no_of_ratings)
+
+# sort the dataframe on the basis of total no. of ratings for each movie and print
+trdf_d_by_NoOfRtgs <- trdf %>% select(NoOfRatings, Movie) %>% arrange(desc(trdf$NoOfRatings))
+print(trdf_d_by_NoOfRtgs[1:5,])
+```
+
+# 4) People who watched Star Wars IV also watched ...
+Calculate movies that most often occur with other movie. For each movie, calculate the percentage of the other movie raters who also rated that movie. Order with the highest percentage first, and submit the top 5. Select "Star.Wars.IV...A.New.Hope" movie by defaut. Use the (x+y)/x method.
+
+Top Occurences:
+0.9333333, 'Toy Story'
+0.8666667, 'Star Wars: Episode VI - Return of the Jedi'
+0.8000000, 'The Silence of the Lambs'
+0.7333333, 'Independence Day'
+0.6666667, 'Total Recall'
+
+```{r}
+#rdf1=read.csv("critics.csv")
+top5 = rdf1[complete.cases(rdf1$Star.Wars.IV...A.New.Hope), ] #We identify the complete rated critics of the movies
+top5 = top5[2:20] != "NA"  #We exclude the NAs from the data, so the movies which are not rated
+#View(cm5)
+top5.1 = colSums(top5, na.rm = T) # We sum up the rating of each movie
+top5.1 = sort(top5.1, decreasing = T) # We sort in descending order
+top5.1 = head(top5.1, n = 6) # We finally select the top 6 movies rating, 6 because we need to keep as well "Star Wars IV...a New Hope"
+top5.1 = data.frame(common=head(top5.1)) # The Data are transformed into a data frame
+#View(cm5.1) # Let's see the rating of the top 6 movie rating
+cm6 = top5.1[2:6,,drop=F]/(top5.1[1,]) # Last step is to calculate the percentage of the other movie raters who also rated that movie
+head(cm6, n = 5) # We print the Top Occurences
+```
+
+
+# This is another (more holistic) solution for question no. 4 itself. You may the Ignore the follwoing block of code; This function too calculates the ratings, but using a conventional approach;However this one finds the top5 for each and every movie; things are not hard coded in this code
+```{r fig.width=7, fig.height=6}
+# This function too calculates the ratings, but using a conventional approach; Please ignore this. However this one 
+# finds the top5 for each and every movie
+
+# create a 20*20 matrix that contains the association confidence between each movies
+MY_AND <- function(...) Reduce("&", list(...))
+no_of_movies = nrow(trdf)
+masoc = matrix(data=c(0), nrow=no_of_movies, ncol=no_of_movies)
+no_of_critics = 20  #Find a better way of doing this
+for(i in 1:no_of_movies) {
+  for(j in 1:no_of_movies) {
+    if(i==j) {
+      masoc[i,j] = -1
+    } else {
+      x <- !is.na(trdf[i, 1:no_of_critics])
+      y <- !is.na(trdf[j, 1:no_of_critics])
+      #masoc[i,j]=(sum(MY_AND(x,y))) / (sum(x))
+      masoc[j,i]=(sum(MY_AND(x,y))) / (sum(x))
+    }
+  }
+}
+
+movie_names <- rownames(trdf)
+col_names <- c("movie names", movie_names)
+assoc_matrix <- masoc
+assoc_matrix <- data.frame(cbind(movie_names, assoc_matrix))
+colnames(assoc_matrix) <- col_names
+
+get_most_recommended<-function(amatrix, movie_name) {
+  #movie_names <- amatrix[, 1]
+  #for(movie in movie_names) {
+    movie_cor = amatrix[, c("movie names", movie_name)]
+    print("=================================\n")
+    print(movie_name)
+    print("=================================\n")
+    #movie_cor_d <- movie_cor %>% arrange(desc(movie_name))
+    movie_cor_d <- movie_cor[order(movie_cor[,movie_name], decreasing = TRUE),]
+    print(movie_cor_d[1:5,])
+  #}
+}
+
+movie_names <- assoc_matrix[, 1]
+#get_most_recommended(assoc_matrix, "Gladiator")
+
+for(movie in movie_names) {
+  get_most_recommended(assoc_matrix, movie)
+}
+
+```
+
+# 5) People who liked Babe also liked ...
+Calculate the movies better rated by people who liked a movie. Select the people who liked the movie "Babe" (4 or 5 stars) and provide the top 5 movies they liked most.
+
+**Expected result**:
+5.000, 'Pulp.Fiction'
+5.000, 'Groundhog.Day'
+4.500, 'The.Shawshank.Redemption'
+4.333, 'Toy.Story'
+4.000, 'Blade.Runner'
+
+```{r fig.width=7, fig.height=6}
+likedBabeDf=rdf1[complete.cases(rdf$Babe), ] # We select the rated critics from Babe movie
+likedBabeDf=likedBabeDf[(likedBabeDf$Babe==4|likedBabeDf$Babe==5),] # We select only critics with rating 4 or 5
+#View(likedBabeDf) # Let's view the Data
+likedBabeDf1=likedBabeDf[-which(colnames(likedBabeDf)=="Babe")] # At that point we don'T need anymore the Babe rating
+likedBabeDf1=likedBabeDf1[-which(colnames(likedBabeDf1)=="User")] # We don't need the name of the rater
+#View(likedBabeDf1) # Let's view the data
+likedBabeDf2 = colMeans(likedBabeDf1, na.rm=T) # Let's calculate the average rating
+likedBabeDf2 = sort(likedBabeDf2, decreasing = T) # We sort in descending order
+likedBabeDf2 = head(likedBabeDf2, n = 5) # We select the top 5 movies
+head(likedBabeDf2) # We print out the movies better rated of people who liked Babe with 4 or 5 stars.
+```
+
+# 6) MovieLens
+Explore a real data set and provide non-personalized ratings. You can use the MovieLens database. You can find MovieLens' dataset here: http://files.grouplens.org/datasets/movielens/ml-10m-README.html
+
+```{r}
+
+```
+

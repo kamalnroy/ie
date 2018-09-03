@@ -1,0 +1,97 @@
+---
+title: "Social Network Analysis - Exercise 2"
+author: PairXX - FullName1 - FullName2
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading data and basic description
+
+In this second assignment, we will use a new dataset, Twitter activity around a rumor. In particular, in your dataset, you will find RTs between users, in this format:
+
+- First column:  retweeting user
+- Second column: retweeted user
+- Third column: timestamp
+
+As we did in our first assignment you have to:
+
+- Load the dataset
+- Build the original graph object. Your resulting graph must be directed (and be careful with the direction during the rest of the assignment)
+- We are NOT going to simplify this graph 
+- We are NOT going to keep only the largest connected component
+
+After loading your data you have to describe your graph in a paragraph, mentioning how many nodes and edges it has, how many connected components and how they are (both weak and strong), and how the degree distribution is (is it power law?) for both, in and out degree. Additionally, compute the global clustering and reciprocity for this graph. Interpret your results.
+
+```{r}
+# CHUNK 1
+```
+
+## Analyzing communities in a spreading network
+
+In this section, you have to compute communities using two algorithms:
+
+  - eigen_centrality
+  - fastgreedy.community
+  
+You have to make two visualizations of the network with the results provided by the algorithms. In order to compare both results, keep the same positions for the nodes in both visualizations. Compare also two metrics to check which algorithm provides the best result and discuss your choice:
+
+  - Internal and external density (for this goal, check the function _crossing_ in Igraph)
+  - Modularity
+  
+```{r}
+# CHUNK 2
+```
+
+
+## Analyzing how the spreading works
+
+In this section, we have to describe how the spreading has evolved:
+
+- Plot a graph showing the number of infected nodes on time (an infected node is a node who has published content - it is in the graph but we see no retweets from him but people retweet his content - or a node who has retweeted a tweet). Describe what you see.
+
+```{r}
+# CHUNK 3
+```
+
+- Compute the reproduction number (how many infected nodes on average appear from a previous infected node?). How this number evolve in time (for a given time, considering only past interactions)?
+
+```{r}
+# CHUNK 4
+```
+
+- Visualize the longest cascade: considering links that infect new nodes (nodes that have not previously appeared in the spreading), create the subgraph and visualize it.
+
+```{r}
+# CHUNK 5
+```
+
+## Creating spreading simulations
+
+In this part, we will do the next steps:
+
+  - Generate a random graph with the Barabasi-Albert model with the same number of nodes and (approximately) the same number of edges as in the original graph.
+  - Generate diffusion simulations, using the SI model, on this graph using the "sir" function on igraph with: i) gamma = 0 ii) beta (probability of infecting a neighbor) a should be set in such a way that the mean number of neighbors per node (degree) times beta should be similar to the reproduction rate you have previously computed for the original graph.
+  - Visualize the largest cascade in your simulation, using the same code as in chunk 4.
+  
+```{r}
+# CHUNK 6
+```
+
+## Generate a video (optional)
+
+This part of the assignment will be considered in your final grades as very positive if you are able to do it :)
+
+- Consider the largest weak connected component in the original data.
+- The goal is creating a video showing the evolution of the graph in time.
+- To this end, you must follow the code specified here: http://estebanmoro.org/2015/12/temporal-networks-with-r-and-igraph-updated/
+- As you can see in the last part of the post, there is a code for generating videos by creating every frame in the video.
+- Every frame is just a static visualization of the graph by removing "future" links and considering the previous positions of the nodes in the layout using the appropiate parameter.
+- Finally, after generating the frames, you merge them by using a video tool (in the post, ffmpeg is used)
+
+```{r}
+# CHUNK 7
+```
+

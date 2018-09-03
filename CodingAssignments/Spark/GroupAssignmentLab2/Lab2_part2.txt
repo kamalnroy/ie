@@ -1,0 +1,34 @@
+# read the file that contains IDs with length bigger than 3, from the storage bucket
+rdd_main = sc.textFile("gs://kamal_at_ie/idsgt3.csv")
+
+# Do some sanity check
+print(rdd_main.count())
+
+# get no. of partitions in the rdd
+rdd_main.getNumPartitions()
+
+# Reduce the partitions to 2;# although, we should do only if the existing no. of partitions is > 2
+rddCoalesed = rdd_main.coalesce(2) 
+
+# again check if the no. of partitions are <=2
+rdd_main.getNumPartitions()
+
+# get the length of all IDs put together
+recLenRdd = rddCoalesed.map(lambda rec: len(rec))
+totalLength = recLenRdd.reduce(lambda a, b: a + b)
+print("Total length of all strings:" + str(totalLength))
+
+#Sort the IDs alphabetically and print the first 10
+sortedRdd = rddCoalesed.map(lambda x: (x, 1)).sortByKey().keys()
+sortedRdd.take(10)
+
+# Store the sorted RDD in gs
+sortedRdd.saveAsTextFile("gs://kamal_at_ie/sorted_rddids.txt")
+
+#From rdd_main obtain the number of ids that share the first 2 chars
+#For example if we have ids: aax , aat, aaron, bbt we would have aa,3 and bb,1
+rddWordCount = rdd_main.map(lambda x: (x[:2], 1)).reduceByKey(lambda a, b: a + b)
+
+# print the first 10
+rddWordCount.take(10)
+

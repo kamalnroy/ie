@@ -1,0 +1,164 @@
+# IE - Master in Business Analytics and Big Data
+Recommendation Systems
+
+Building a Collaborative Filtering Engine
+
+Author: Kamal Nandan
+
+========================================================
+
+# Initialization
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Import libraries
+```{r}
+library(data.table)
+library(dplyr)
+library(ggplot2)
+library(gridExtra)
+library(grid)
+```
+
+Load the critics dataset.
+```{r}
+rdf <- data.frame(read.csv("critics.csv", header = TRUE, stringsAsFactors = FALSE))
+#rdf1 = read.csv("critics.csv")
+```
+
+# 1) Pearson correlation coefficient 
+Calculate the Pearson correlation coefficient between Victoria and Nuria
+
+**Expected correlation between Victoria and Nuria**: 0.3651484
+
+```{r fig.width=7, fig.height=6}
+ratingV <- as.numeric(as.vector(rdf[rdf$User=="Victoria", 2:21])) # Extract Victoria's ratings
+ratingN <- as.numeric(as.vector(rdf[rdf$User=="Nuria", 2:21])) # Extract Nuria's ratings
+r1 <- cor(ratingV, ratingN, method = c("pearson"), use = "pairwise.complete.obs") # Correlation coefficient
+paste("Correlation between Victoria and Nuria is:", r1)
+
+```
+
+# 2) Compare two movie critics
+Using the calculated Pearson correlation in the previous section. Compare and show the movie ratings for Victoria and Nuria on a scatter plot. How is this compared with the same ratings of Maria and Nerea on a scatter plot? What about Chris and Jim? What it means?
+```{r}
+rating_Victoria <- as.numeric(as.vector(rdf[rdf$User=="Victoria", 2:21]))
+rating_Nuria <- as.numeric(as.vector(rdf[rdf$User=="Nuria", 2:21]))
+p1 = qplot(rating_Victoria, rating_Nuria, geom = c("point","smooth"))
+r1 <- cor(rating_Victoria, rating_Nuria, method = c("pearson"), use = "pairwise.complete.obs")
+paste("Correlation between Victoria and Nuria is:", r1)
+
+
+rating_Maria <- as.numeric(as.vector(rdf[rdf$User=="Maria", 2:21]))
+rating_Nerea <- as.numeric(as.vector(rdf[rdf$User=="Nerea", 2:21]))
+p2 = qplot(rating_Maria, rating_Nerea, geom= c("point","smooth"))
+r1 <- cor(rating_Maria, rating_Nerea, method = c("pearson"), use = "pairwise.complete.obs")
+paste("Correlation between Maria and Nerea is:", r1)
+
+
+rating_Chris <- as.numeric(as.vector(rdf[rdf$User=="Chris", 2:21]))
+rating_Jim <- as.numeric(as.vector(rdf[rdf$User=="Jim", 2:21]))
+p3 = qplot(rating_Chris, rating_Jim, geom=c("point","smooth"))
+r1 <- cor(rating_Chris, rating_Jim, method = c("pearson"), use = "pairwise.complete.obs")
+paste("Correlation between Chris and Jim is:", r1)
+
+
+grid.arrange(p1, p2, p3, nrow = 1)
+
+# Looking at the graph and correlation figures we can say that:
+# There is slightly positive correlation(0.36) between Victoria and Nuria
+# There is a slightly negative correlation(-0.3) between Maria and Nerea
+# There is a high correlation between (0.825) between Chris and Jim
+
+```
+
+
+# 3) Top Recommendations 
+Get the top 5 movies recommended for Victoria. by using a weighted average of every other critic's rankings.
+
+**Expected result**:
+3.7917013044215, 'The Matrix'
+3.50776533175371, 'Forrest Gump'     
+3.33118834864677, 'The Sixth Sense' 
+3.11491825315719, 'Shakespeare in Love'
+2.9124513228665, 'Blade Runner'
+
+```{r fig.width=7, fig.height=6}
+trdf <- t(rdf)            ## Traspose the data frame
+colnames(trdf) = trdf[1,]  ## Assign the column names
+trdf =trdf[-1,]            ## Eliminate first row
+
+## Convert it to data frame in order to transform values to numeric
+d2 <- data.frame(trdf) 
+d2[1:20] <- lapply(d2[1:20], function(x) as.numeric(as.character(x)))
+d2.1=d2[1:20]
+
+# Keep out movies that Victoria hasn't watched
+d2.v=d2.1[complete.cases(d2.1$Victoria != "NA"),,drop=F]
+
+ ## Correlation table
+d3=cor(d2.1[,unlist(lapply(d2.1,is.numeric))],use="pairwise.complete.obs")
+
+## Select the movies that Victoria hasn't watch yet
+MOVIES=rownames(d2.1[is.na(d2.1$Victoria == "NA"),15,drop=F])
+
+## User ratings for all the movies that Victoria hasn't watch yet
+dff=rdf[1:20,c(MOVIES)]
+
+## Calculate the mean for all the users
+user_mean = rowMeans(rdf[,2:21],na.rm=T)
+
+## Calculate the difference between the Rating of each movie with its respective User Mean
+almostdiff=cbind(dff,user_mean)
+diff = (almostdiff-almostdiff$user_mean)[-15,-8]
+
+## Multiply the previous Difference by each user Correlation that Victoria.
+almostdiff2=cbind(diff,corr=(d3[,15])[-15])
+df3=colSums((almostdiff2*almostdiff2$corr)[-8],na.rm=T)
+
+## Divide it by the Sum of all the Pearson correlations
+df3=df3/sum(abs((d3[,15])[-15]),na.rm=T)
+
+## Finally sum all the movie results with Victoria rating's mean
+df3=df3+ mean(d2.v$Victoria)
+head(sort(df3,decreasing=T),n=5)
+
+```
+
+# 4) Top similar critics
+Return the top 5 critics that are most similar to Victoria. 
+
+**Expected result**:
+0.9449112, 'Rachel'
+0.5976143, 'Ana' 
+0.5789794, 'Oriol'
+0.4925922, 'Maria'
+0.4273247, 'Carles'
+
+```{r fig.width=7, fig.height=6}
+
+ratingVictoria <- as.numeric(as.vector(rdf[rdf$User=="Victoria", 2:21])) # Extract Victoria's ratings
+user_names <- rdf[rdf$User!="Victoria", 1] # Get the names of all the usrers other than Victoria
+corr_vector = vector(mode="integer", length=20)
+
+# Loop throw the dataframe and find the correlation between Victoria and everyone else
+for(i in 1:nrow(rdf)) {
+  if(rdf[i,1]=="Victoria") {
+    corr_vector[i] = -1
+  } else {
+    userrating <- as.numeric(as.vector(rdf[i, 2:21]))
+    corr_vector[i] = cor(ratingVictoria, userrating, method = c("pearson"), use = "pairwise.complete.obs")
+  }
+}
+
+# Add a new column that will contain the correlation between Victoria and everyone else
+victoriaVsOthers <- rdf %>% mutate(victoriacorr = corr_vector)  
+
+#Arrange the dataframe in descending order based on correlation between Victoria and everyone else
+trdf_d_by_pcgt4 <- victoriaVsOthers %>% select(User, victoriacorr) %>% arrange(desc(victoriaVsOthers$victoriacorr))
+
+# print the top 5 correlated users
+print(trdf_d_by_pcgt4[1:5,])
+
+```

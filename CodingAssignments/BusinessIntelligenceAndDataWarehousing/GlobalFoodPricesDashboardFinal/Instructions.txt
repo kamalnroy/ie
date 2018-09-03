@@ -1,0 +1,6 @@
+How to open the Tableau dashboard:
+1. Create a database called "testglobalfoodprices"
+2. Import the DB dump into the database "testglobalfoodprices". The MySQL DB dump folder name is "GlobalFoodPricesDbDump"
+3. Open the Tableau workbook called "MarketPricesOfFoodItemsInSouthEastAsis.twb"
+4. You will be promted to provide the MySql "testglobalfoodprices" db credentials. Fill in the details and the dashboard would open in front of you.
+5. Just looking at the dashboard, we can easily and quickly find out the lowest price of various food items such as rice/wheat/lentils/ptatoes/onions in various neighboring countries and the provinces.

@@ -1,0 +1,26 @@
+gcloud dataproc jobs submit spark --cluster cluster-0068-m --class org.apache.spark.examples.SparkPi --jars file:///usr/lib/spark/examples/jars/spark-examples.jar -- 1000
+
+
+spark-submit --class org.apache.spark.examples.SparkPi --master local file:///usr/lib/spark/examples/jars/spark-examples.jar 100
+
+spark-submit --class org.apache.spark.examples.SparkPi --master spark://10.128.0.6:7077 file:///usr/lib/spark/examples/jars/spark-examples.jar 1000
+
+gcloud dataproc jobs submit spark --cluster cluster-0068-m --class org.apache.spark.examples.SparkPi --jars file:///usr/lib/spark/examples/jars/spark-examples.jar -- 1000
+
+
+gcloud dataproc jobs submit spark --cluster cluster-d130 --class org.apache.spark.examples.SparkPi --jars file:///usr/lib/spark/examples/jars/spark-examples.jar -- 1000
+
+
+Nice python notebook Kamal, but I do need an explanation of the different parts and the general approach. I cannot differentiate this work from any other submission copied from the Internet. I actually found many of your ideas here: https://www.kaggle.com/humananalog/xgboost-lasso
+
+
+db.tickets.find ( {"route.price": {$gt:200})
+
+db.tickets.find ({"route.origin": "London","route.destination": "Paris"},{"passenger.name":1, "passenger.telephone":1, "route.origin":1, "route.destination":1} ) 
+
+db.tickets.find ({"route.distance": {$gte:1000}}, {"passenger.birthDate":1, "route.distance":1} )
+
+db.tickets.find ({"route.origin": {$ne:"London"}}, {"passenger.name":1, "route.origin":1} )
+
+db.tickets.find ({"passenger.name": /Sally/i}, {"flightDate":1, "passenger.name":1} )
+db.tickets.find ({"passenger.name": /^Sally$/i }, {flightDate:1, "passenger.name":1} )

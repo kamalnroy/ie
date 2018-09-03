@@ -1,0 +1,47 @@
+```{r}
+library(fBasics)
+library(forecast)
+library(tseries)
+library(fUnitRoots)
+```
+
+```{r}
+datos<-read.csv("Homework2.DATA.csv",header=TRUE,sep=";",dec=",")
+#y<-datos[,2][1:90]
+```
+
+```{r}
+ibex <- datos[, 2]
+```
+
+```{r}
+ibex
+```
+
+
+```{r}
+ts.plot(ibex)
+```
+
+```{r}
+ndiffs(y, alpha=0.05, test=c("adf"))
+```
+```{r}
+ibexd = diff(ibex, 1)
+```
+
+```{r}
+ts.plot(ibexd)
+```
+
+```{r}
+adfTest(ibexd,lags=10)
+adf.test(ibexd, k=10, alternative = c("stationary"))
+```
+
+```{r}
+acf(ibexd)  
+pacf(ibexd)
+```
+
+

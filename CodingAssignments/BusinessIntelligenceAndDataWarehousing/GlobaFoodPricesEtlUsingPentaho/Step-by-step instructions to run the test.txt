@@ -1,0 +1,31 @@
+Steps to run the test:
+1. Ideally the model should be synchronized with the DB, but there is some issue of referntial integrity, we are not able to do so. 
+But to run the testing of the job, we need to have the database structure in place, so as a stop-gap arrangement, we need to go to the workbench, connect to the database and run the following SQL commands; running this commands would put into place all the tables in the DB.
+
+create database testglobalfoodprices
+use testglobalfoodprices
+CREATE TABLE d_market (id INT, _name VARCHAR(64), province VARCHAR(64), country VARCHAR(64), description VARCHAR(128));
+
+CREATE TABLE d_currency (id INT, _name VARCHAR(64), country VARCHAR(64), description VARCHAR(128));
+
+CREATE TABLE d_date (id INT, month INT, year INT, description VARCHAR(128));
+
+CREATE TABLE d_pricetype (id INT, _name VARCHAR(64), description VARCHAR(128));
+
+CREATE TABLE d_unit (id INT, _name VARCHAR(64), description VARCHAR(128));
+
+CREATE TABLE d_commodity (id INT, _name VARCHAR(64), description VARCHAR(128));
+
+CREATE TABLE f_commoditymarketprices (id INT, d_date_id INT, d_commodity_id INT, d_currency_id INT, d_market_id INT, d_pricetype_id INT, d_unittype_id INT, market_price INT, market_price_source VARCHAR(128), description VARCHAR(128));
+
+
+2. After this switch to pentaho and open all the transformations and jobs(esp. "Job_GlobalFoodPrices" )
+
+3. In Pentaho go to the DB connections section(View->DatabaseConnections) where you will find a Shared database connection called "GlobalFoodPricesDataConn". Clik on that and provide the right credentials for the MySql DB such as db-host, db-port, username, password etc. Make sure that the DB schema name is "testglobalfoodprices".
+For a sanity check, just check if the databse connection is working by clicking "Test" button.
+
+4. Make sure that the "GlobalFoodPricesDatabase.csv" is in the same folder where the job "Job_GlobalFoodPrices" is present.
+
+5. Goto "Job_GlobalFoodPrices" and click "Run"
+
+6. The job would start running and all the relevant tables will be populated with the data from CSV.

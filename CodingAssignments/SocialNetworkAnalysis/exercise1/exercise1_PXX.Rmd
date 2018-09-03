@@ -1,0 +1,83 @@
+---
+title: "Social Network Analysis - Exercise 2"
+author: PairXX - FullName1 - FullName2
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+On this first exercise, we will learn the basic functions of the Igraph package, a great tool to use Social Network Analysis metrics in our projects. We will use in this first exercise a dataset, "mathoverflow-ints.txt", containing interactions between MathOverflow users with the next information:
+
+- Answers to questions
+- Comments to questions
+- Comments to answers
+
+You have to complete the code chunks in this document but also analyze the results, extract insights and describe them in an understandable way.
+
+<span style="color:blue">Please, write all your conclusions in blue</span>
+
+Both exercises may be done individually or in pairs; do not forget to write the name of the members of the team at the beginning of this document and also your team number in the name of this file (exercise1_PXX.Rmd)
+
+## Loading data
+
+In this section, the goal is loading the dataset given for this exercise, building the graph object and analyzing basics metrics.
+
+- Build the graph object with all the interactions. Include the timestamp and the type of the edge as edge attributes.
+- Describe the values provided by summary function on the graph object.
+- Validate the graph has been created correctly comparing with the information after reading the file.
+- Simplify the graph in order to remove loops and multiple edges. After simplifying the graph, a weight attribute should have been created, counting the number of interactions between two users.
+
+```{r}
+# CHUNK 1
+```
+
+## Analyzing the graph
+
+In this section, we will use Igraph functions to analyze some basic features:
+
+- Is the graph connected? If it is not, compute the connected components and analyze the statistical distribution of the size of the resulting components. Do this considering all the links but also using only the different types of edges. 
+- Analyze the statistical distribution of the "weight" attribute created in the previous section and fit it to a power law distribution. Does it fit well enough? 
+
+```{r}
+# CHUNK 2
+```
+
+
+## Node degree
+
+A typical analysis when dealing with social networks is studying the degree distribution of the nodes.
+- Visualize the statisical distribution of the node degree.
+- Again, is it a power-law distribution? Explain why this is the case.
+
+```{r}
+# CHUNK 3
+```
+
+## Building connected graphs
+
+In general, in interaction networks, many connected components turn out after creating the graph. However, most of the nodes typically belong to the same giant component. In this section, the goal is:
+- Build a subgraph with all the nodes belonging to the largest connected component.
+- Validate the graph has been correctly created.
+- Analyze how node degree has changed from the original graph to this new subgraph. Find out which nodes have now a smaller number of connections and explain why.
+
+
+```{r}
+# CHUNK 4
+```
+
+# Visualizing shortest paths
+
+On this previous subgraph, you have to compute:
+
+- The shortest path from the node with the highest degree to the rest of the graph.
+- From all these paths, select one path with the maximum length.
+- Visualize only this path using the plot function.
+- Visualize this path within the giant component subgraph.
+
+To this end, use the layout.fruchterman.reingold function to place the nodes in the visualization.
+
+```{r}
+# CHUNK 5
+```

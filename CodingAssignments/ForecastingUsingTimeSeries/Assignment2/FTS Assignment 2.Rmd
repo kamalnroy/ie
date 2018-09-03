@@ -1,0 +1,417 @@
+---
+title: "2nd assignment"
+author: "Nina Gorbenko"
+date: "3/13/2018"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Preparation
+
+```{r upload libraries}
+library(fBasics) # basic statistics 
+library(forecast) # to test stationarity
+library(fUnitRoots) # for differences
+library(ggfortify) # more plots
+library(fGarch) 
+library(corrplot)
+library(car) #for vif
+library(fBasics)
+library(forecast)
+library(tseries)
+library(fUnitRoots)
+```
+
+```{r csv reading}
+df<-read.csv("Homework2.DATA.csv",header=TRUE,sep=";",dec=",")
+
+y <- df[,2]
+er <- df[,3]
+st <- df[,4]
+lt <- df[,5]
+```
+
+##FT
+
+#Stationarity
+```{r}
+ts.plot(y)   # time series plot
+par(mfrow=c(2,1))
+acf(y)  
+pacf(y)
+```
+
+###Checking
+####Tests
+```{r non-stationary in the mean?}
+adfTest(y,lags=10,type=c("c")) #Augmented Dickey Fuller test, H0: data is not stationary and needs (at least) one unit root
+
+# Non Seasonal
+ndiffs(y, alpha=0.05, test=c("adf")) #how many differences required to make the data stationary
+
+# Seasonal
+
+s=3 # length of 1 season <- WHY?????
+nsdiffs(y,m=s,test=c("ocsb"))  
+
+```
+
+###Conclusions
+
+###Transformation
+
+```{r taking differences}
+
+z<- diff(y,s) #taking seasonal differences
+
+d <- 1 # number of regular differences
+z<-diff(z,d) # taking regular differences
+
+
+
+ts.plot(z) #checking again
+adfTest(z,lags=10,type=c("c")) 
+
+```
+
+```{r}
+#ts.plot(log(y))
+```
+
+
+```{r log}
+#z <- log(y)
+
+```
+
+##Setting parameters
+
+###ACF & PACF
+```{r plots}
+par(mfrow=c(3,1))
+ts.plot(z)   
+acf(z)
+pacf(z)
+# TS, ASF and PASF plots
+```
+
+P 4 (1,1,0,1) or 2
+Q 1
+
+##Tests
+
+```{r}
+
+```
+
+##Models training
+
+```{r}
+
+fit<-arima(z,order=c(0,0,6),fixed=c(NA,0,0,0,0,NA,NA)) # NA for significant lags only
+fit # we find the information about the estimated parameters
+
+#Seasonal
+fit<-arima(y,order=c(0,1,0),seasonal=list(order=c(2,1,1), period=s)) 
+fit
+
+#6340:  log likelihood = -610.6,  aic = 1229.19
+#GWN
+
+fit<-arima(y,order=c(0,1,0),seasonal=list(order=c(4,1,1), period=s)) 
+fit
+
+#6284:  log likelihood = -610.16,  aic = 1232.31
+#GWN
+
+fit<-arima(y,order=c(0,1,1),seasonal=list(order=c(2,1,1), period=s)) 
+fit
+
+#final - ARIMA(0,1,1)(2,1,1)[3] 
+
+
+
+fit
+summary(fit)
+
+```
+
+arima(x = y, order = c(0, 1, 1), seasonal = list(order = c(2, 1, 1), period = s))
+
+sigma^2 estimated as 6223:  log likelihood = -609.65,  aic = 1229.3
+Training set error measures:
+                   ME    RMSE    MAE       MPE     MAPE      MASE          ACF1
+Training set 4.564221 77.4295 61.637 0.2441589 2.141986 0.9411559 -0.0004623594
+
+
+arima(x = y, order = c(0, 1, 0), seasonal = list(order = c(2, 1, 1), period = s))
+
+sigma^2 estimated as 6340:  log likelihood = -610.6,  aic = 1229.19
+Training set error measures:
+                   ME     RMSE      MAE       MPE     MAPE      MASE      ACF1
+Training set 4.941713 78.15335 62.10277 0.2680196 2.151663 0.9482679 0.1309605
+
+
+```{r auto arima}
+myts <- ts(y, frequency = 3)
+fit <- auto.arima(myts)
+fit
+```
+ARIMA(0,1,1)(0,1,1)[3] 
+
+AIC=1227.78   AICc=1228.02   BIC=1235.74
+Training set error measures:
+                   ME     RMSE      MAE       MPE     MAPE     MASE         ACF1
+Training set 5.809354 78.27326 62.68624 0.2795851 2.176241 0.520503 -0.001463271
+
+##Checking residuals
+
+```{r quick}
+rr <- fit$residuals
+Box.test (rr, lag = 20, type="Ljung")  # Null: ro1=???=ro20=0 => uncorrelated data
+Box.test(rr^2,lag=20, type="Ljung")    # Null: ro1=???=ro20=0 => SWN
+shapiro.test(rr) # Ho: the data is normally distributed 
+```
+
+
+```{r WN?}
+rr <- fit$residuals
+
+par(mfrow=c(3,1))
+ts.plot(rr)   
+acf(rr)
+pacf(rr)
+
+Box.test (rr, lag = 20, type="Ljung")  # Null: ro1=???=ro20=0 => uncorrelated data
+```
+
+
+```{r SWN?}
+par(mfrow=c(3,1))
+ts.plot(rr^2)   
+acf(rr^2)
+pacf(rr^2)
+
+Box.test(rr^2,lag=20, type="Ljung")    # Null: ro1=???=ro20=0 => SWN
+```
+
+```{r GWN? (checking for normality)}
+
+hist(rr,prob=T,ylim=c(0,0.01),xlim=c(mean(rr)-3*sd(rr),mean(rr)+3*sd(rr)),col=rgb(1,0,0,alpha=0.8))
+lines(density(rr),lwd=2, col=rgb(0,0,0,alpha=0.7))
+mu<-mean(rr)
+sigma<-sd(rr)
+x<-seq(mu-3*sigma,mu+3*sigma,length=100)
+yy<-dnorm(x,mu,sigma)
+lines(x,yy,lwd=2,col="blue")
+#OR
+
+shapiro.test(rr) # Ho: the data is normally distributed 
+#(because if it is normally distributed WN -> it s GWN)
+```
+
+#LM
+
+```{r 1st}
+m1=lm(y~er+st+lt)
+summary(m1)
+
+#Adjusted R-squared:  0.9455 
+
+vif(m1)
+#if vif >5 - remove
+```
+
+```{r checking correlation}
+corr.matrix <- cor(df)
+corrplot(corr.matrix, method="number")
+
+ts.plot(lt,col="blue",ylab="Value",
+     main = "Exchange rate vs Short-term rate vs Long-term rate")
+par(new=TRUE)
+ts.plot(st,col="red", ylab = "")
+par(new=TRUE)
+ts.plot(er,col="green", ylab = "")
+
+plot(y,er, main = "Values", ylab = "Exchange rate", xlab = "")
+plot(y,lt, ylab = "Long-term rate", xlab = "")
+plot(y,st, ylab = "Short-term rate", xlab = "IBEX")
+```
+
+
+```{r checking correlation with diffs}
+ndiffs(er, alpha=0.05, test=c("adf"))
+#etc
+
+dlt <- diff(lt)
+dst <- diff(st)
+der <- diff(er)
+dy <- diff(y)
+
+ddf <- as.data.frame(cbind(dlt,dst,der,dy))
+
+corr.matrix <- cor(ddf)
+corrplot(corr.matrix, method="number")
+
+ts.plot(dlt,col="blue",ylab="Differences",
+     main = "Exchange rate vs Short-term rate vs Long-term rate")
+par(new=TRUE)
+ts.plot(dst,col="red", ylab = "")   
+par(new=TRUE)
+ts.plot(der,col="green", ylab = "")
+
+plot(dy,der, main = "Differences",ylab = "", xlab = "")
+plot(dy,dlt,ylab = "", xlab = "")
+plot(dy,dst,ylab = "", xlab = "IBEX")
+```
+
+
+```{r trying}
+#without lt - adjR2=0.9035
+m2=lm(y~er+st)
+vif(m2)
+summary(m2)
+```
+
+```{r with diffs}
+#with diffs - adjR2=0.4755 RMSE = 58.32212
+m3 = lm(dy~ der+dst+dlt)
+vif(m3)
+summary(m3)
+```
+
+```{r without intercept}
+m4 = lm(dy~ -1+der+dlt)
+vif(m4)
+summary(m4)
+```
+
+
+```{r checking residuals}
+rr <- m2$residuals #no
+rr <- m4$residuals #GWN
+```
+
+```{r evaluation}
+RSS <- c(crossprod(m4$residuals))
+MSE <- RSS / length(m4$residuals)
+RMSE <- sqrt(MSE)
+RMSE
+
+#OR summary(m2)$sigma
+
+par(mfrow=c(3,1))
+plot(m3)
+```
+
+#FT+LM
+
+```{r}
+lmft1=arima(y,order=c(0,1,1),xreg=cbind(er,lt,st),include.mean=F, seasonal=list(order=c(2,1,1), period=s)) 
+lmft1 #RMSE 56.19065 GWN
+
+lmft2=arima(y,order=c(1,1,0),xreg=cbind(er,lt,st),include.mean=F) 
+lmft2
+
+lmft3 <- auto.arima(myts,xreg=cbind(er,lt,st)) #ARIMA(1,0,0)
+
+lmft4 <- auto.arima(myts,xreg=cbind(er,lt,st),D=1) #-> ARIMA(1,0,1)(0,1,1)[3] RMSE=54.56556, GWN
+
+acf(m4$residuals,lag=36)
+pacf(m4$residuals,lag=36)
+lmft5=arima(y,order=c(4,0,1),xreg=cbind(er,lt,st),include.mean=F, seasonal=list(order=c(1,1,1), period = s)) #
+lmft6=arima(y,order=c(4,1,4),xreg=cbind(er,lt,st),include.mean=F, seasonal=list(order=c(1,1,1), period = s)) #RMSE 51.87182
+lmft7=arima(y,order=c(4,0,4),xreg=cbind(er,lt),include.mean=F, seasonal=list(order=c(1,1,1), period = s)) #RMSE 53.2412
+
+lmft8=arima(y,order=c(4,1,4),xreg=cbind(er,lt),include.mean=F, seasonal=list(order=c(1,1,1), period = s)) #RMSE 49.89811
+
+lmft9 <- auto.arima(myts,xreg=cbind(er,lt,st),D=1,d=1) #-> ARIMA(0,1,0)(0,1,1)[3] RMSE=56.7349
+
+lmft10=arima(y,order=c(4,1,4),fixed = c(0,0,0,NA,0,0,0,NA,NA,NA,NA,NA),xreg=cbind(er,lt),include.mean=F, seasonal=list(order=c(1,1,1), period = s))
+
+```
+
+```{r checking residuals}
+rr <- lmft5$residuals
+Box.test (rr, lag = 20, type="Ljung")  # Null: ro1=???=ro20=0 => uncorrelated data
+Box.test(rr^2,lag=20, type="Ljung")    # Null: ro1=???=ro20=0 => SWN
+shapiro.test(rr) # Ho: the data is normally distributed
+```
+
+
+#Models evaluation
+
+```{r}
+
+```
+
+#Prediction
+
+```{r Prediction}
+y.pred<-predict(lmft8,n.ahead=1, newxreg = cbind(ner,nlt))
+y.pred$pred # point predictions
+y.pred$se  # standard error for the point predictions to compute confidence intervals
+
+```
+
+
+```{r Visualisation}
+ts.plot(y)
+lines(y.pred$pred,col="red")
+lines(y.pred$pred+1.96*y.pred$se,col="red",lty=3)
+lines(y.pred$pred-1.96*y.pred$se,col="red",lty=3)
+```
+
+```{r comparison of predictions with real values}
+real<-datos[,2][91:96]      
+predicted<- y.pred$pred
+```
+
+```{r with log}
+fit = arima(log(AirPassengers), c(0, 1, 1), seasonal = list(order = c(0, 1, 1), period = 12))
+pred <- predict(fit, n.ahead = 10*12)
+ts.plot(AirPassengers,exp(pred$pred), log = "y", lty = c(1,3))
+```
+
+
+
+#More Visualization
+```{r}
+d.forecast <- forecast(lmft8, level = c(95), h = 1, xreg = cbind(ner,nlt))
+autoplot(d.forecast)
+#MORE
+autoplot(d.forecast, ts.colour = 'blue', predict.colour = 'red')
+```
+
+
+
+```{r}
+r1=read.table("w-gs1yr.txt",header=T)[,4]
+r3=read.table("w-gs3yr.txt",header=T)[,4]
+m1=lm(r3???r1)
+summary(m1)
+
+plot(m1$residuals,type=???l???)
+acf(m1$residuals,lag=36)
+c1=diff(r1)
+c3=diff(r3)
+m2=lm(c3 -1+c1) #by "-1" we suppress the intercept as the input of the formula is differences of variables
+summary(m2)
+
+acf(m2$residuals,lag=36)
+m3=arima(c3,order=c(0,0,1),xreg=c1,include.mean=F) #we do not include mean because it s differenced model
+m3
+
+rsq=(sum(c3^2)-sum(m3$residuals^2))/sum(c3^2)
+rsq
+[1] 0.8310077
+```
+
+
+#Notes:
+
+- try the same with log later

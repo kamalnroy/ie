@@ -1,0 +1,14 @@
+```{r}
+library(fBasics)
+library(forecast)
+library(tseries)
+```
+
+```{r}
+data<-read.csv("Homework_1_DATA.csv",header=TRUE,sep=";",dec=",")
+y<-data[,1] 
+series1=data[,1][1:300]
+
+
+```
+

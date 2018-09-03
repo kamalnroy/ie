@@ -1,0 +1,42 @@
+Global Food Prices Database
+
+DESCRIPTION
+The Global Food Prices Database has data on food prices (e.g., beans, rice, fish, and sugar) for 76 countries and some 1,500 markets. The data goes back as far as 1992 for a few countries, although most of the price trends start in 2000-2002.
+
+
+FIELDS
+
+Administrative Boundary ID: ID for the particular administrative boundary.
+
+Administrative Boundary Name: Typically the name of the country.
+Administrative Boundary ID 1: ID for the particular administrative boundary.
+
+Administrative Boundary Name 1: Typically the name of the state or province.
+
+Market ID: ID for this particular market.
+
+Market Name: ID for this particular market.
+
+Commodity ID: ID identifying the specific commodity.
+
+Commodity Name: Name of the commodity.
+
+Currency ID: ID for this particular currency.
+
+Currency Name: Name of the currency.
+
+Price Type ID: ID for the price type.
+
+Price Type Category: Category of price.
+
+UM ID: ID for the unit of measurement.
+
+UM Name: Unit of measurement name.
+
+MP Month: Month of measurement for this particular commodity price.
+
+MP Year: Year of measurement for the commodity market price.
+
+MP Price: Market price for the commodity in this month.
+
+Mp Commodity Source: Market Price Commodity Source.
